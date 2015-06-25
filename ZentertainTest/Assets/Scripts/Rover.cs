@@ -57,28 +57,23 @@ public class Rover : MonoBehaviour {
 		CurrentActionIndex = 0;
 	}
 	
-	// Update is called once per frame
-	void Update () {
-	
-	}
-
-	public void DrawRover(int _x, int _y, Direction _dir)
+	public void DrawRover(int _x, int _y, Rover.Direction _dir)
 	{
 		PosX = _x;
 		PosY = _y;
 		Dir = _dir;
 		transform.position = new Vector3(PosX, transform.position.y, PosY);
-		if(Dir == Direction.N)
+		if(Dir == Rover.Direction.N)
 			transform.localEulerAngles = Vector3.zero;
-		else if(Dir == Direction.E)
+		else if(Dir == Rover.Direction.E)
 			transform.localEulerAngles = new Vector3(0, 90, 0);
-		else if(Dir == Direction.W)
+		else if(Dir == Rover.Direction.W)
 			transform.localEulerAngles = new Vector3(0, -90, 0);
-		else if(Dir == Direction.S)
+		else if(Dir == Rover.Direction.S)
 			transform.localEulerAngles = new Vector3(0, 180, 0);
 	}
 
-	public void SetRoverCommand(Command[] _commands)
+	public void SetRoverCommands(Command[] _commands)
 	{
 		Commands = _commands;
 	}
@@ -90,18 +85,11 @@ public class Rover : MonoBehaviour {
 		return Commands[CurrentActionIndex];
 	}
 
-
-
 	public void Broken()
 	{
 		Debug.Log("DEAD");
 		IsAlive = false;
 		return;
-	}
-
-	public void LogState()
-	{
-		Debug.Log(string.Format("{0}:[{1},{2},{3}],{4}", gameObject.name, PosX, PosY, Dir, IsAlive ? "Alive" : "Dead"));
 	}
 
 	public void DoMove()
@@ -137,6 +125,11 @@ public class Rover : MonoBehaviour {
 		PosY = (int)transform.position.z;
 		Dir = (Direction)(((int)Dir+2)%4);
 		SkipCommand();
+	}
+
+	public void LogState()
+	{
+		Debug.Log(string.Format("{0}:\t[{1},{2},{3}],\t{4}", gameObject.name, PosX, PosY, Dir, IsAlive ? "Alive" : "Dead"));
 	}
 
 	void SkipCommand()

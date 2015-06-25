@@ -5,36 +5,39 @@ using System.Collections.Generic;
 
 public class Mars : MonoBehaviour {
 
-	public int width;
-	public int height;
-	public int[,] map;
-	public List<Rover> rovers = new List<Rover>();
+	public const int FLOOR = 0;
+	public const int ROVER = 1;
+
+	public int Width
+	{
+		get;
+		private set;
+	}
+	public int Height
+	{
+		get;
+		private set;
+	}
+	public int[,] Map
+	{
+		get;
+		private set;
+	}
+	public List<Rover> Rovers
+	{
+		get;
+		private set;
+	}
 
 	public TextAsset configFile;
 	public GameObject floorPrefab;
 	public GameObject roverPrefab;
 
-	public bool HasObstacle(int _x, int _y)
-	{
-		if(IsOutOfBoundry(_x, _y))
-			return false;
-		return map[_x, _y] == 1;
-	}
-
-	public bool IsOutOfBoundry(int _x, int _y)
-	{
-		if(_x < 0 || _x >= width || _y < 0 || _y >= height)
-			return true;
-		return false;
-	}
-
 	// Use this for initialization
 	void Start () {
+		Rovers = new List<Rover>();
 		InitMars();
 		CreateFloors();
-//		Debug.Log(width);
-//		Debug.Log(height);
-//		Debug.Log(rovers.Count);
 	}
 	
 	// Update is called once per frame
@@ -57,12 +60,12 @@ public class Mars : MonoBehaviour {
 			string trimedLine = line.Trim();
 			if(!hasReadFirstLine)
 			{
-				width = int.Parse(trimedLine.Split(',')[0]);
-				height = int.Parse(trimedLine.Split(',')[1]);
-				map = new int[width, height];
-				for(int i = 0; i < width; ++i)
-					for(int j = 0; j < height; ++j)
-						map[i, j] = 0;
+				Width = int.Parse(trimedLine.Split(',')[0]);
+				Height = int.Parse(trimedLine.Split(',')[1]);
+				Map = new int[Width, Height];
+				for(int i = 0; i < Width; ++i)
+					for(int j = 0; j < Height; ++j)
+						Map[i, j] = FLOOR;
 				hasReadFirstLine = true;
 			}
 			else 
@@ -76,11 +79,11 @@ public class Mars : MonoBehaviour {
 					Rover.Direction dir = (Rover.Direction)Enum.Parse(typeof(Rover.Direction), roverDetails[2]);
 					
 					GameObject newRover = Instantiate(roverPrefab) as GameObject;
-					newRover.name = "Rover" + (rovers.Count+1);
+					newRover.name = "Rover" + (Rovers.Count+1);
 					Rover newRoverScript = newRover.GetComponent<Rover>();
 					newRoverScript.DrawRover(x, y, dir);
-					rovers.Add(newRoverScript);
-					map[x, y] = 1;
+					Rovers.Add(newRoverScript);
+					Map[x, y] = ROVER;
 				}
 				else
 				{
@@ -90,7 +93,7 @@ public class Mars : MonoBehaviour {
 						//						Debug.Log(trimedLine[i]);
 						commands[i] = (Rover.Command)Enum.Parse(typeof(Rover.Command), trimedLine[i].ToString());
 					}
-					rovers[rovers.Count-1].SetRoverCommand(commands);
+					Rovers[Rovers.Count-1].SetRoverCommands(commands);
 					hasNewRover = false;
 				}
 			}
@@ -106,9 +109,9 @@ public class Mars : MonoBehaviour {
 	void CreateFloors()
 	{
 		GameObject floorGourp = new GameObject("floorGroup");
-		for(int i = 0; i < width; ++i)
+		for(int i = 0; i < Width; ++i)
 		{
-			for(int j = 0; j < height; ++j)
+			for(int j = 0; j < Height; ++j)
 			{
 				GameObject floor = Instantiate(floorPrefab, new Vector3(i, 0, j), Quaternion.identity) as GameObject;
 				floor.transform.parent = floorGourp.transform;
@@ -118,9 +121,9 @@ public class Mars : MonoBehaviour {
 
 	void UpdateMars()
 	{
-		for(int i = 0; i < rovers.Count; ++i)
+		for(int i = 0; i < Rovers.Count; ++i)
 		{
-			Rover rover = rovers[i];
+			Rover rover = Rovers[i];
 			if(IsOutOfBoundry(rover.PosX, rover.PosY))
 				rover.Broken();
 			else
@@ -129,15 +132,15 @@ public class Mars : MonoBehaviour {
 				switch(nowCommand)
 				{
 				case Rover.Command.M:
-					if ((rover.Dir == Rover.Direction.N && !HasObstacle(rover.PosX, rover.PosY+1)) ||
-					    (rover.Dir == Rover.Direction.E && !HasObstacle(rover.PosX+1, rover.PosY)) ||
-					    (rover.Dir == Rover.Direction.W && !HasObstacle(rover.PosX-1, rover.PosY)) ||
-					    (rover.Dir == Rover.Direction.S && !HasObstacle(rover.PosX, rover.PosY-1)))
+					if ((rover.Dir == Rover.Direction.N && !HasObstacle(rover.PosX, 	rover.PosY+1)) 	||
+					    (rover.Dir == Rover.Direction.E && !HasObstacle(rover.PosX+1, 	rover.PosY)) 	||
+					    (rover.Dir == Rover.Direction.W && !HasObstacle(rover.PosX-1, 	rover.PosY)) 	||
+					    (rover.Dir == Rover.Direction.S && !HasObstacle(rover.PosX, 	rover.PosY-1)))
 					{
-						map[rover.PosX, rover.PosY] = 0;
+						Map[rover.PosX, rover.PosY] = FLOOR;
 						rover.DoMove();
 						if(!IsOutOfBoundry(rover.PosX, rover.PosY))
-							map[rover.PosX, rover.PosY] = 1;
+							Map[rover.PosX, rover.PosY] = ROVER;
 					}	
 					break;
 				case Rover.Command.L:
@@ -147,15 +150,15 @@ public class Mars : MonoBehaviour {
 					rover.DoTurnR();
 					break;
 				case Rover.Command.B:
-					if ((rover.Dir == Rover.Direction.N && !HasObstacle(rover.PosX, rover.PosY-1)) ||
-					    (rover.Dir == Rover.Direction.E && !HasObstacle(rover.PosX-1, rover.PosY)) ||
-					    (rover.Dir == Rover.Direction.W && !HasObstacle(rover.PosX+1, rover.PosY)) ||
-					    (rover.Dir == Rover.Direction.S && !HasObstacle(rover.PosX, rover.PosY+1)))
+					if ((rover.Dir == Rover.Direction.N && !HasObstacle(rover.PosX, 	rover.PosY-1)) 	||
+					    (rover.Dir == Rover.Direction.E && !HasObstacle(rover.PosX-1, 	rover.PosY)) 	||
+					    (rover.Dir == Rover.Direction.W && !HasObstacle(rover.PosX+1, 	rover.PosY)) 	||
+					    (rover.Dir == Rover.Direction.S && !HasObstacle(rover.PosX, 	rover.PosY+1)))
 					{
-						map[rover.PosX, rover.PosY] = 0;
+						Map[rover.PosX, rover.PosY] = FLOOR;
 						rover.DoBack();
 						if(!IsOutOfBoundry(rover.PosX, rover.PosY))
-							map[rover.PosX, rover.PosY] = 1;
+							Map[rover.PosX, rover.PosY] = ROVER;
 					}	
 					break;
 				case Rover.Command.NULL:
@@ -167,5 +170,17 @@ public class Mars : MonoBehaviour {
 		}
 	}
 
-
+	bool HasObstacle(int _x, int _y)
+	{
+		if(IsOutOfBoundry(_x, _y))
+			return false;
+		return Map[_x, _y] == 1;
+	}
+	
+	bool IsOutOfBoundry(int _x, int _y)
+	{
+		if(_x < 0 || _x >= Width || _y < 0 || _y >= Height)
+			return true;
+		return false;
+	}
 }
